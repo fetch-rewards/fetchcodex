@@ -7,9 +7,11 @@
 // compiled `dist/` output used by the published CLI.
 
 import type { FullAutoErrorMode } from "./auto-approval-mode.js";
+import type { BuildSettings } from "./build-settings.js";
 import type { ReasoningEffort } from "openai/resources.mjs";
 
 import { AutoApprovalMode } from "./auto-approval-mode.js";
+import { BUILD_SETTINGS_OPTIONS } from "./build-settings.js";
 import { log } from "./logger/log.js";
 import { providers } from "./providers.js";
 import { config as loadDotenv } from "dotenv";
@@ -215,6 +217,12 @@ export type AppConfig = {
     };
   };
   fileOpener?: FileOpenerScheme;
+
+  /**
+   * Controls whether to run build and/or tests after generating patches.
+   * "disabled" (default), "build", or "build-and-test".
+   */
+  buildSettings: BuildSettings;
 };
 
 // Formatting (quiet mode-only).
@@ -523,6 +531,16 @@ export const loadConfig = (
   // Merge default providers with user configured providers in the config.
   config.providers = { ...providers, ...storedConfig.providers };
 
+  // Build settings config: default to 'disabled' if not set or invalid.
+  if (
+    typeof storedConfig.buildSettings === "string" &&
+    BUILD_SETTINGS_OPTIONS.includes(storedConfig.buildSettings as BuildSettings)
+  ) {
+    config.buildSettings = storedConfig.buildSettings as BuildSettings;
+  } else {
+    config.buildSettings = "disabled";
+  }
+
   return config;
 };
 
@@ -559,6 +577,8 @@ export const saveConfig = (
     approvalMode: config.approvalMode,
     disableResponseStorage: config.disableResponseStorage,
     flexMode: config.flexMode,
+    // Persist build settings selected via interactive slash command
+    buildSettings: config.buildSettings,
     reasoningEffort: config.reasoningEffort,
   };
 

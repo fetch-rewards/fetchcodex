@@ -10,7 +10,11 @@ import type {
 import MultilineTextEditor from "./multiline-editor";
 import { TerminalChatCommandReview } from "./terminal-chat-command-review.js";
 import TextCompletions from "./terminal-chat-completions.js";
-import { loadConfig } from "../../utils/config.js";
+import {
+  BUILD_SETTINGS_OPTIONS,
+  type BuildSettings,
+} from "../../utils/build-settings.js";
+import { loadConfig, saveConfig, type AppConfig } from "../../utils/config.js";
 import { getFileSystemSuggestions } from "../../utils/file-system-suggestions.js";
 import { expandFileTags } from "../../utils/file-tag-utils";
 import { createInputItem } from "../../utils/input-utils.js";
@@ -52,6 +56,8 @@ export default function TerminalChatInput({
   openOverlay,
   openModelOverlay,
   openApprovalOverlay,
+  openBuildSettingsOverlay,
+  setConfig,
   openHelpOverlay,
   openDiffOverlay,
   openSessionsOverlay,
@@ -76,6 +82,9 @@ export default function TerminalChatInput({
   openOverlay: () => void;
   openModelOverlay: () => void;
   openApprovalOverlay: () => void;
+  openBuildSettingsOverlay: () => void;
+  /** Callback to update global config state when settings change */
+  setConfig: (config: AppConfig) => void;
   openHelpOverlay: () => void;
   openDiffOverlay: () => void;
   openSessionsOverlay: () => void;
@@ -297,6 +306,9 @@ export default function TerminalChatInput({
                 case "/approval":
                   openApprovalOverlay();
                   break;
+                case "/buildsettings":
+                  openBuildSettingsOverlay();
+                  break;
                 case "/diff":
                   openDiffOverlay();
                   break;
@@ -504,6 +516,54 @@ export default function TerminalChatInput({
       } else if (inputValue === "/compact") {
         setInput("");
         onCompact();
+        return;
+      } else if (inputValue.startsWith("/buildsettings")) {
+        // Allow setting build settings via slash command or opening overlay
+        setInput("");
+        const parts = inputValue.trim().split(/\s+/);
+        if (parts.length > 1) {
+          const arg = parts
+            .slice(1)
+            .join(" ")
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+          if (BUILD_SETTINGS_OPTIONS.includes(arg)) {
+            const newSetting = arg as BuildSettings;
+            saveConfig({ ...loadConfig(), buildSettings: newSetting });
+            setConfig(loadConfig());
+            setItems((prev) => [
+              ...prev,
+              {
+                id: `buildsettings-${Date.now()}`,
+                type: "message",
+                role: "system",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Build settings set to ${newSetting}`,
+                  },
+                ],
+              },
+            ]);
+          } else {
+            setItems((prev) => [
+              ...prev,
+              {
+                id: `buildsettings-error-${Date.now()}`,
+                type: "message",
+                role: "system",
+                content: [
+                  {
+                    type: "input_text",
+                    text: `Invalid build settings value '${parts.slice(1).join(" ")}'. Expected one of: ${BUILD_SETTINGS_OPTIONS.join(", ")}`,
+                  },
+                ],
+              },
+            ]);
+          }
+        } else {
+          openBuildSettingsOverlay();
+        }
         return;
       } else if (inputValue.startsWith("/model")) {
         setInput("");
@@ -735,6 +795,8 @@ export default function TerminalChatInput({
       openOverlay,
       openApprovalOverlay,
       openModelOverlay,
+      openBuildSettingsOverlay,
+      setConfig,
       openHelpOverlay,
       openDiffOverlay,
       openSessionsOverlay,

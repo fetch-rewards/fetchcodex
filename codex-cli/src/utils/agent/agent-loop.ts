@@ -31,6 +31,7 @@ import {
 } from "../session.js";
 import { applyPatchToolInstructions } from "./apply-patch.js";
 import { handleExecCommand } from "./handle-exec-command.js";
+import { BUILD_SETTINGS_PREFACES } from "../build-settings.js";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -790,8 +791,11 @@ export class AgentLoop {
             if (this.model.startsWith("gpt-4.1")) {
               modelSpecificInstructions = applyPatchToolInstructions;
             }
+            const buildPreface =
+              BUILD_SETTINGS_PREFACES[this.config.buildSettings] || "";
             const mergedInstructions = [
               prefix,
+              buildPreface,
               modelSpecificInstructions,
               this.instructions,
             ]
@@ -1182,7 +1186,13 @@ export class AgentLoop {
                 }
               }
 
-              const mergedInstructions = [prefix, this.instructions]
+              const buildPreface =
+                BUILD_SETTINGS_PREFACES[this.config.buildSettings] || "";
+              const mergedInstructions = [
+                prefix,
+                buildPreface,
+                this.instructions,
+              ]
                 .filter(Boolean)
                 .join("\n");
 

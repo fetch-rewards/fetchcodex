@@ -5,6 +5,7 @@ import type { FileOperation } from "../utils/singlepass/file_ops";
 
 import Spinner from "./vendor/ink-spinner"; // Third‑party / vendor components
 import TextInput from "./vendor/ink-text-input";
+import { BUILD_SETTINGS_PREFACES } from "../utils/build-settings.js";
 import { createOpenAIClient } from "../utils/openai-client";
 import {
   generateDiffSummary,
@@ -393,13 +394,18 @@ export function SinglePassApp({
       });
 
       const openai = createOpenAIClient(config);
+      // Inject build settings preface into user prompt if configured
+      const buildPreface = BUILD_SETTINGS_PREFACES[config.buildSettings] || "";
+      const userContent = buildPreface
+        ? `${buildPreface}\n${taskContextStr}`
+        : taskContextStr;
       const chatResp = await openai.beta.chat.completions.parse({
         model: config.model,
         ...(config.flexMode ? { service_tier: "flex" } : {}),
         messages: [
           {
             role: "user",
-            content: taskContextStr,
+            content: userContent,
           },
         ],
         response_format: zodResponseFormat(EditedFilesSchema, "schema"),

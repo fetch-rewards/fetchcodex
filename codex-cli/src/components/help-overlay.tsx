@@ -63,6 +63,11 @@ export default function HelpOverlay({
           <Text color="cyan">/compact</Text> – condense context into a summary
         </Text>
 
+        <Text>
+          <Text color="cyan">/buildsettings</Text> – enable codex building
+          and/or testing
+        </Text>
+
         <Box marginTop={1}>
           <Text bold dimColor>
             Keyboard shortcuts

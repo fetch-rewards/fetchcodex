@@ -30,6 +30,7 @@ import { shortCwd } from "../../utils/short-path.js";
 import { saveRollout } from "../../utils/storage/save-rollout.js";
 import { CLI_VERSION } from "../../version.js";
 import ApprovalModeOverlay from "../approval-mode-overlay.js";
+import BuildSettingsOverlay from "../build-settings-overlay.js";
 import DiffOverlay from "../diff-overlay.js";
 import HelpOverlay from "../help-overlay.js";
 import HistoryOverlay from "../history-overlay.js";
@@ -49,10 +50,14 @@ export type OverlayModeType =
   | "model"
   | "approval"
   | "help"
+  | "buildsettings"
   | "diff";
 
 type Props = {
+  /** Current application config state (mutable via setConfig) */
   config: AppConfig;
+  /** Callback to update application config state when settings change */
+  setConfig: (config: AppConfig) => void;
   prompt?: string;
   imagePaths?: Array<string>;
   approvalPolicy: ApprovalPolicy;
@@ -138,6 +143,7 @@ async function generateCommandExplanation(
 
 export default function TerminalChat({
   config,
+  setConfig,
   prompt: _initialPrompt,
   imagePaths: _initialImagePaths,
   approvalPolicy: initialApprovalPolicy,
@@ -524,6 +530,8 @@ export default function TerminalChat({
             openOverlay={() => setOverlayMode("history")}
             openModelOverlay={() => setOverlayMode("model")}
             openApprovalOverlay={() => setOverlayMode("approval")}
+            openBuildSettingsOverlay={() => setOverlayMode("buildsettings")}
+            setConfig={setConfig}
             openHelpOverlay={() => setOverlayMode("help")}
             openSessionsOverlay={() => setOverlayMode("sessions")}
             openDiffOverlay={() => {
@@ -744,6 +752,35 @@ export default function TerminalChat({
                 },
               ]);
 
+              setOverlayMode("none");
+            }}
+            onExit={() => setOverlayMode("none")}
+          />
+        )}
+
+        {overlayMode === "buildsettings" && (
+          <BuildSettingsOverlay
+            currentSetting={config.buildSettings}
+            onSelect={(newSetting) => {
+              if (newSetting === config.buildSettings) {
+                return;
+              }
+              saveConfig({ ...config, buildSettings: newSetting });
+              setConfig({ ...config, buildSettings: newSetting });
+              setItems((prev) => [
+                ...prev,
+                {
+                  id: `switch-buildsettings-${Date.now()}`,
+                  type: "message",
+                  role: "system",
+                  content: [
+                    {
+                      type: "input_text",
+                      text: `Build settings set to ${newSetting}`,
+                    },
+                  ],
+                },
+              ]);
               setOverlayMode("none");
             }}
             onExit={() => setOverlayMode("none")}

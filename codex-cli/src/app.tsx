@@ -29,13 +29,14 @@ type Props = {
 
 export default function App({
   prompt,
-  config,
+  config: initialConfig,
   rollout,
   imagePaths,
   approvalPolicy,
   additionalWritableRoots,
   fullStdout,
 }: Props): JSX.Element {
+  const [config, setConfig] = useState<AppConfig>(initialConfig);
   const app = useApp();
   const [accepted, setAccepted] = useState(() => false);
   const [cwd, inGitRepo] = useMemo(
@@ -98,6 +99,7 @@ export default function App({
   return (
     <TerminalChat
       config={config}
+      setConfig={setConfig}
       prompt={prompt}
       imagePaths={imagePaths}
       approvalPolicy={approvalPolicy}
