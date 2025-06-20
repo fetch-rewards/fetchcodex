@@ -8,7 +8,7 @@
 
 ## 🎯 What's This?
 
-Fetch Codex is a powerful fork of [OpenAI's Codex CLI](https://github.com/openai/codex) that brings the magic of AI-assisted development to iOS engineers. Specifically, we have added a /buildsettings command to the CLI that lets developers control whether the model tries to run builds and tests after making its changes.
+Fetch Codex is a powerful fork of [OpenAI's Codex CLI](https://github.com/openai/codex) that brings the magic of AI-assisted development to iOS engineers. Specifically, we have added a **/buildsettings** command to the CLI that lets developers control whether the model tries to run builds and tests after making its changes.
 
 ## 🛠️ Features
 
